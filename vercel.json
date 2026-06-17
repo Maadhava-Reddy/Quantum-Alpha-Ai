@@ -2,11 +2,9 @@
   "version": 2,
   "functions": {
     "api/analyze.py": {
-      "runtime": "python3.9",
       "maxDuration": 60
     },
     "api/chat.py": {
-      "runtime": "python3.9",
       "maxDuration": 10
     }
   },
