@@ -21,6 +21,8 @@ Just type any stock name — no `.NS` suffix needed:
 
 `RELIANCE` `TCS` `HDFCBANK` `ICICIBANK` `INFY` `BHARTIARTL` `TATAMOTORS` `SBIN` `BAJFINANCE` `SUNPHARMA` `WIPRO` `MARUTI` `AXISBANK` `ITC` `ONGC` `HINDUNILVR` `NTPC` `CIPLA` `DRREDDY` and many more...
 
+Experience the website here - https://quantum-alpha-ai.vercel.app/ 
+
 ## 🛠️ Tech Stack
 
 | Layer | Technology |
