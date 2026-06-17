@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Quantum Alpha AI — Indian Stock Market Dashboard. Real-time NSE/BSE prices, AI predictions, and analysis in ₹ INR.">
+<title>Quantum Alpha AI | Indian Stock Market Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+<style>
+:root {
+  --bg: #060b1a;
+  --bg2: #0a1228;
+  --bg3: #0f1a38;
+  --card: rgba(255,255,255,0.04);
+  --border: rgba(255,255,255,0.08);
+  --cyan: #00e5c3;
+  --blue: #4cc9f0;
+  --green: #22c55e;
+  --red: #ef4444;
+  --yellow: #f59e0b;
+  --purple: #a855f7;
+  --white: #f1f5f9;
+  --muted: #94a3b8;
+  --dim: #475569;
+  --r: 14px;
+  --r-sm: 8px;
+  --r-lg: 20px;
+  --shadow: 0 8px 32px rgba(0,0,0,0.4);
+  --ease: cubic-bezier(0.4,0,0.2,1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--cyan); border-radius: 4px; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--white);
+  min-height: 100vh;
+}
+
+/* ── TICKER TAPE ── */
+.ticker-bar {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  height: 36px; overflow: hidden;
+  display: flex; align-items: center;
+  position: sticky; top: 0; z-index: 100;
+}
+.ticker-inner {
+  display: flex; gap: 0;
+  animation: scroll 50s linear infinite;
+  white-space: nowrap;
+}
+.ticker-item {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; padding: 0 20px;
+  display: flex; align-items: center; gap: 7px;
+  color: var(--muted);
+}
+.ticker-item .sym { color: var(--white); font-weight: 700; }
+.ticker-item .up  { color: var(--green); }
+.ticker-item .dn  { color: var(--red); }
+.ticker-sep { color: var(--border); }
+@keyframes scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* ── HEADER ── */
+.header {
+  background: rgba(10,18,40,0.95);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  height: 64px;
+  display: flex; align-items: center; gap: 20px;
+  backdrop-filter: blur(20px);
+  position: sticky; top: 36px; z-index: 90;
+}
+.logo {
+  font-size: 18px; font-weight: 800; letter-spacing: -0.02em;
+  display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+}
+.logo-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: linear-gradient(135deg, var(--cyan), var(--purple));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+.logo span { color: var(--cyan); }
+
+/* Search bar */
+.search-bar {
+  flex: 1; max-width: 480px;
+  display: flex; gap: 8px; align-items: center;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 99px; padding: 8px 16px;
+  transition: all 0.2s;
+}
+.search-bar:focus-within {
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 3px rgba(0,229,195,0.1);
+}
+.search-bar i { color: var(--muted); font-size: 14px; flex-shrink: 0; }
+.search-bar input {
+  flex: 1; background: none; border: none; outline: none;
+  color: var(--white); font-size: 14px; font-family: 'Inter', sans-serif;
+  font-weight: 600; letter-spacing: 0.05em;
+}
+.search-bar input::placeholder { color: var(--dim); font-weight: 400; letter-spacing: 0; }
+.btn-analyze {
+  padding: 9px 24px; border-radius: 99px; border: none; cursor: pointer;
+  background: linear-gradient(135deg, var(--cyan), var(--blue));
+  color: #060b1a; font-size: 13px; font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  display: flex; align-items: center; gap: 6px;
+  transition: all 0.2s; white-space: nowrap; flex-shrink: 0;
+  box-shadow: 0 4px 16px rgba(0,229,195,0.25);
+}
+.btn-analyze:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(0,229,195,0.4); }
+.btn-analyze:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+.header-right {
+  margin-left: auto; display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+}
+.market-badge {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; color: var(--muted);
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 99px; padding: 5px 12px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.live-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--green); animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* ── LAYOUT ── */
+.layout {
+  display: grid;
+  grid-template-columns: 220px 1fr 280px;
+  gap: 0;
+  height: calc(100vh - 100px);
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  padding: 20px 12px;
+  overflow-y: auto;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.sidebar-label {
+  font-size: 10px; color: var(--dim);
+  text-transform: uppercase; letter-spacing: 0.15em;
+  font-weight: 700; padding: 12px 12px 6px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.nav-btn {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: var(--r-sm);
+  cursor: pointer; transition: all 0.18s;
+  font-size: 13.5px; color: var(--muted); font-weight: 500;
+  border: 1px solid transparent; user-select: none;
+}
+.nav-btn:hover { background: rgba(255,255,255,0.05); color: var(--white); }
+.nav-btn.active {
+  background: rgba(0,229,195,0.1); color: var(--cyan);
+  border-color: rgba(0,229,195,0.2);
+}
+.nav-btn i { font-size: 15px; width: 18px; text-align: center; }
+.nav-badge {
+  margin-left: auto; font-size: 10px; background: rgba(239,68,68,0.2);
+  color: var(--red); padding: 1px 7px; border-radius: 99px;
+  border: 1px solid rgba(239,68,68,0.3); font-weight: 700;
+}
+
+/* Quick stocks */
+.quick-stocks {
+  margin-top: auto; padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.quick-stock-btn {
+  width: 100%; display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 12px; border-radius: var(--r-sm);
+  cursor: pointer; transition: all 0.15s;
+  font-size: 12px; color: var(--muted);
+  border: none; background: none;
+}
+.quick-stock-btn:hover { background: rgba(255,255,255,0.05); color: var(--white); }
+.qsym { font-weight: 700; color: var(--white); font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+.qprice { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+.qup { color: var(--green); }
+.qdn { color: var(--red); }
+
+/* ── MAIN CONTENT ── */
+.main {
+  overflow-y: auto; padding: 24px;
+  display: flex; flex-direction: column; gap: 20px;
+}
+
+/* Section visibility */
+.page { display: none; flex-direction: column; gap: 20px; }
+.page.active { display: flex; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── CARDS ── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+.card-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; border-bottom: 1px solid var(--border);
+}
+.card-title {
+  font-size: 14px; font-weight: 700;
+  display: flex; align-items: center; gap: 8px;
+}
+.card-title i { font-size: 15px; }
+.card-body { padding: 20px; }
+
+/* ── KPI GRID ── */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 14px;
+}
+.kpi {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 16px;
+  transition: all 0.2s;
+}
+.kpi:hover { border-color: rgba(0,229,195,0.25); transform: translateY(-2px); }
+.kpi-label {
+  font-size: 11px; color: var(--muted); font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 5px;
+}
+.kpi-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 20px; font-weight: 700; margin-bottom: 4px;
+}
+.kpi-sub { font-size: 11px; color: var(--muted); }
+.kpi.cyan .kpi-val  { color: var(--cyan); }
+.kpi.green .kpi-val { color: var(--green); }
+.kpi.blue .kpi-val  { color: var(--blue); }
+.kpi.yellow .kpi-val{ color: var(--yellow); }
+.kpi.red .kpi-val   { color: var(--red); }
+.kpi.purple .kpi-val{ color: var(--purple); }
+
+/* ── CHART ── */
+.chart-wrap { position: relative; height: 280px; }
+.chart-wrap canvas { width: 100% !important; }
+
+/* ── DECISION BANNER ── */
+.decision-banner {
+  border-radius: var(--r);
+  padding: 28px 32px;
+  display: flex; align-items: center; gap: 24px;
+  border: 1px solid;
+  position: relative; overflow: hidden;
+}
+.decision-banner::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 60% 80% at 0% 50%, currentColor 0%, transparent 70%);
+  opacity: 0.06; pointer-events: none;
+}
+.decision-banner.buy   { background: rgba(34,197,94,0.08); border-color: rgba(34,197,94,0.3); }
+.decision-banner.sell  { background: rgba(239,68,68,0.08);  border-color: rgba(239,68,68,0.3); }
+.decision-banner.hold  { background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.3); }
+.decision-icon { font-size: 48px; flex-shrink: 0; }
+.decision-text {}
+.decision-verdict {
+  font-size: 36px; font-weight: 800; letter-spacing: -0.02em; line-height: 1;
+  margin-bottom: 6px;
+}
+.decision-banner.buy  .decision-verdict { color: var(--green); }
+.decision-banner.sell .decision-verdict { color: var(--red); }
+.decision-banner.hold .decision-verdict { color: var(--yellow); }
+.decision-reason { font-size: 13px; color: var(--muted); line-height: 1.6; max-width: 520px; }
+
+/* ── WATCHLIST TABLE ── */
+.watch-table { width: 100%; border-collapse: collapse; }
+.watch-table th {
+  font-size: 10.5px; color: var(--dim); text-align: left;
+  padding: 8px 12px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; border-bottom: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+}
+.watch-table td {
+  padding: 12px; font-size: 13px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  vertical-align: middle;
+}
+.watch-table tr:hover td { background: rgba(255,255,255,0.025); }
+.watch-table tr:last-child td { border-bottom: none; }
+.sym-cell { display: flex; flex-direction: column; gap: 2px; }
+.sym-name { font-weight: 700; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--cyan); cursor: pointer; }
+.sym-name:hover { text-decoration: underline; }
+.sym-full { font-size: 11px; color: var(--muted); }
+.price-val { font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+.chg-up { color: var(--green); font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 12px; }
+.chg-dn { color: var(--red);   font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 12px; }
+.rec-badge {
+  display: inline-flex; padding: 3px 10px; border-radius: 99px;
+  font-size: 10.5px; font-weight: 700; font-family: 'JetBrains Mono', monospace;
+}
+.rec-badge.BUY  { background: rgba(34,197,94,0.15); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+.rec-badge.SELL { background: rgba(239,68,68,0.15); color: var(--red);   border: 1px solid rgba(239,68,68,0.3); }
+.rec-badge.HOLD { background: rgba(245,158,11,0.15);color: var(--yellow);border: 1px solid rgba(245,158,11,0.3); }
+
+/* ── HEATMAP ── */
+.heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+.heat-cell {
+  border-radius: var(--r-sm); padding: 14px;
+  cursor: pointer; transition: all 0.2s;
+  border: 1px solid transparent;
+}
+.heat-cell:hover { transform: scale(1.03); border-color: rgba(255,255,255,0.15); }
+.heat-cell.bull     { background: rgba(34,197,94,0.12); }
+.heat-cell.bull-str { background: rgba(34,197,94,0.22); }
+.heat-cell.bear     { background: rgba(239,68,68,0.12); }
+.heat-cell.bear-str { background: rgba(239,68,68,0.22); }
+.heat-cell.neutral  { background: rgba(148,163,184,0.08); }
+.heat-sector { font-size: 10px; color: var(--muted); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; font-family: 'JetBrains Mono', monospace; }
+.heat-stocks { display: flex; flex-direction: column; gap: 5px; }
+.heat-stock { display: flex; justify-content: space-between; font-size: 12px; }
+.heat-sym { font-weight: 700; color: var(--white); }
+.bull .heat-chg, .bull-str .heat-chg { color: var(--green); font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; }
+.bear .heat-chg, .bear-str .heat-chg { color: var(--red);   font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; }
+.neutral .heat-chg { color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+
+/* ── NEWS FEED ── */
+.news-list { display: flex; flex-direction: column; gap: 8px; }
+.news-card {
+  display: flex; gap: 12px; align-items: flex-start;
+  background: rgba(255,255,255,0.025); border: 1px solid var(--border);
+  border-radius: var(--r-sm); padding: 12px 14px;
+  transition: all 0.2s; cursor: pointer;
+}
+.news-card:hover { background: rgba(255,255,255,0.05); }
+.news-tag {
+  flex-shrink: 0; padding: 3px 9px; border-radius: 99px;
+  font-size: 10px; font-weight: 700; font-family: 'JetBrains Mono', monospace;
+}
+.news-tag.pos { background: rgba(34,197,94,0.12); color: var(--green); border: 1px solid rgba(34,197,94,0.25); }
+.news-tag.neg { background: rgba(239,68,68,0.12); color: var(--red);   border: 1px solid rgba(239,68,68,0.25); }
+.news-tag.neu { background: rgba(148,163,184,0.1); color: var(--muted); border: 1px solid rgba(148,163,184,0.2); }
+.news-body {}
+.news-headline { font-size: 13px; font-weight: 600; color: var(--white); line-height: 1.4; margin-bottom: 4px; }
+.news-meta { font-size: 11px; color: var(--dim); }
+.news-score { margin-left: auto; font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+
+/* ── RIGHT PANEL ── */
+.right-panel {
+  background: var(--bg2);
+  border-left: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.rp-head {
+  padding: 16px; border-bottom: 1px solid var(--border);
+}
+.rp-title {
+  font-size: 13px; font-weight: 700; margin-bottom: 2px;
+  display: flex; align-items: center; gap: 7px;
+}
+.rp-title i { color: var(--purple); }
+.rp-sub { font-size: 11px; color: var(--muted); }
+.chat-messages {
+  flex: 1; overflow-y: auto;
+  padding: 12px; display: flex; flex-direction: column; gap: 10px;
+}
+.chat-msg { display: flex; gap: 8px; animation: fadeIn 0.3s ease; }
+.chat-msg.user { flex-direction: row-reverse; }
+.chat-av {
+  width: 26px; height: 26px; border-radius: 99px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
+}
+.chat-msg.ai   .chat-av { background: linear-gradient(135deg, var(--purple), var(--blue)); }
+.chat-msg.user .chat-av { background: linear-gradient(135deg, var(--cyan), var(--green)); color: #060b1a; }
+.chat-bubble {
+  max-width: 85%; padding: 9px 13px; border-radius: 12px;
+  font-size: 12px; line-height: 1.6;
+}
+.chat-msg.ai   .chat-bubble { background: var(--card); border: 1px solid var(--border); border-top-left-radius: 3px; }
+.chat-msg.user .chat-bubble { background: rgba(0,229,195,0.1); border: 1px solid rgba(0,229,195,0.2); border-top-right-radius: 3px; color: var(--cyan); }
+.chat-time { font-size: 9px; color: var(--dim); margin-top: 3px; }
+.typing { display: flex; gap: 4px; align-items: center; }
+.typing-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--purple); animation: bounce 1.4s infinite; }
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes bounce { 0%,80%,100%{transform:translateY(0);opacity:0.4} 40%{transform:translateY(-5px);opacity:1} }
+.chat-input-area {
+  padding: 10px;
+  border-top: 1px solid var(--border);
+  display: flex; gap: 8px;
+}
+.chat-input {
+  flex: 1; background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 9px 12px;
+  color: var(--white); font-size: 12px; outline: none; resize: none;
+  font-family: 'Inter', sans-serif; min-height: 38px; max-height: 80px;
+  transition: all 0.2s;
+}
+.chat-input:focus { border-color: var(--purple); }
+.chat-input::placeholder { color: var(--dim); }
+.chat-send {
+  width: 36px; height: 36px; border-radius: 10px; border: none; cursor: pointer;
+  background: linear-gradient(135deg, var(--purple), var(--blue));
+  color: white; font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; flex-shrink: 0;
+}
+.chat-send:hover { transform: scale(1.05); }
+
+/* ── LOADING OVERLAY ── */
+.loading-overlay {
+  display: none; position: fixed; inset: 0; z-index: 999;
+  background: rgba(6,11,26,0.85); backdrop-filter: blur(10px);
+  align-items: center; justify-content: center; flex-direction: column; gap: 16px;
+}
+.loading-overlay.show { display: flex; }
+.loading-spinner {
+  width: 56px; height: 56px; border-radius: 50%;
+  border: 3px solid rgba(0,229,195,0.15);
+  border-top-color: var(--cyan);
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-title { font-size: 18px; font-weight: 700; color: var(--white); }
+.loading-step { font-size: 12px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+.loading-bar-wrap {
+  width: 280px; height: 4px; background: rgba(255,255,255,0.1);
+  border-radius: 2px; overflow: hidden;
+}
+.loading-bar {
+  height: 100%; border-radius: 2px;
+  background: linear-gradient(90deg, var(--cyan), var(--purple));
+  width: 0%; transition: width 0.3s;
+}
+
+/* ── SENTIMENT BARS ── */
+.sent-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.sent-lbl { font-size: 12px; color: var(--muted); width: 65px; font-weight: 600; }
+.sent-track { flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+.sent-fill  { height: 100%; border-radius: 4px; transition: width 1s ease; }
+.sent-fill.bull { background: var(--green); }
+.sent-fill.bear { background: var(--red); }
+.sent-fill.neu  { background: var(--muted); }
+.sent-pct { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; width: 36px; text-align: right; }
+
+/* ── RSI/MACD indicator badges ── */
+.ind-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ind-card {
+  background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+  border-radius: var(--r-sm); padding: 14px;
+}
+.ind-label { font-size: 10.5px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+.ind-val { font-family: 'JetBrains Mono', monospace; font-size: 24px; font-weight: 700; margin-bottom: 4px; }
+.ind-desc { font-size: 11px; color: var(--muted); }
+
+/* ── SCORE RING ── */
+.score-rings { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+.score-ring-card {
+  background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+  border-radius: var(--r-sm); padding: 16px;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.score-ring-wrap { position: relative; width: 72px; height: 72px; }
+.score-ring-wrap canvas { width: 72px !important; height: 72px !important; }
+.score-ring-num {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700;
+}
+.score-ring-lbl { font-size: 11px; color: var(--muted); text-align: center; font-weight: 600; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+  background: rgba(10,18,40,0.95); border: 1px solid rgba(0,229,195,0.3);
+  border-radius: 12px; padding: 12px 18px;
+  font-size: 13px; font-family: 'JetBrains Mono', monospace; color: var(--cyan);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5); backdrop-filter: blur(20px);
+  display: flex; align-items: center; gap: 8px;
+  transform: translateY(20px); opacity: 0;
+  transition: all 0.35s;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+
+/* ── POPULAR STOCKS CHIPS ── */
+.chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.stock-chip {
+  padding: 6px 14px; border-radius: 99px; cursor: pointer;
+  font-size: 12px; font-weight: 600; border: 1px solid var(--border);
+  background: var(--card); color: var(--muted); transition: all 0.2s;
+  font-family: 'JetBrains Mono', monospace;
+}
+.stock-chip:hover { background: rgba(0,229,195,0.1); color: var(--cyan); border-color: rgba(0,229,195,0.3); }
+
+/* ── SECTION TITLE ── */
+.sec-title {
+  font-size: 20px; font-weight: 800; margin-bottom: 4px; letter-spacing: -0.01em;
+}
+.sec-title span { color: var(--cyan); }
+.sec-sub { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+
+/* RESPONSIVE */
+@media (max-width: 1100px) {
+  .layout { grid-template-columns: 200px 1fr; }
+  .right-panel { display: none; }
+}
+@media (max-width: 768px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  .kpi-row { grid-template-columns: repeat(2,1fr); }
+}
+</style>
+</head>
+<body>
+
+<!-- TICKER TAPE -->
+<div class="ticker-bar">
+  <div class="ticker-inner" id="tickerInner"></div>
+</div>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    QUANTUM<span>ALPHA</span>
+  </div>
+
+  <div class="search-bar">
+    <i class="bi bi-search"></i>
+    <input type="text" id="stockSymbol" placeholder="Type stock name (e.g. RELIANCE, TCS, INFY)" autocomplete="off">
+  </div>
+  <button class="btn-analyze" id="analyzeBtn" onclick="runAnalysis()">
+    <i class="bi bi-cpu"></i> Analyze
+  </button>
+
+  <div class="header-right">
+    <div class="market-badge">
+      <div class="live-dot"></div>
+      NSE / BSE • ₹ INR
+    </div>
+  </div>
+</header>
+
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-title">Analyzing Stock...</div>
+  <div class="loading-step" id="loadingStep">Fetching market data...</div>
+  <div class="loading-bar-wrap"><div class="loading-bar" id="loadingBar"></div></div>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div class="layout">
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-label">Menu</div>
+
+    <div class="nav-btn active" onclick="showPage('dashboard', this)">
+      <i class="bi bi-house-fill"></i> Dashboard
+    </div>
+    <div class="nav-btn" onclick="showPage('prediction', this)">
+      <i class="bi bi-graph-up-arrow"></i> AI Prediction
+    </div>
+    <div class="nav-btn" onclick="showPage('technical', this)">
+      <i class="bi bi-activity"></i> Technical
+    </div>
+    <div class="nav-btn" onclick="showPage('sentiment', this)">
+      <i class="bi bi-newspaper"></i> Sentiment
+    </div>
+    <div class="nav-btn" onclick="showPage('recommendation', this)">
+      <i class="bi bi-stars"></i> Recommendation
+    </div>
+
+    <div class="sidebar-label" style="margin-top:8px">Market</div>
+    <div class="nav-btn" onclick="showPage('watchlist', this)">
+      <i class="bi bi-table"></i> Watchlist
+    </div>
+    <div class="nav-btn" onclick="showPage('heatmap', this)">
+      <i class="bi bi-grid-fill"></i> Sector Heatmap
+    </div>
+
+    <!-- Quick picks -->
+    <div class="quick-stocks">
+      <div class="sidebar-label" style="padding-top:0">Quick Pick</div>
+      <button class="quick-stock-btn" onclick="quickAnalyze('RELIANCE')">
+        <span class="qsym">RELIANCE</span>
+        <span class="qprice qup">₹1,329</span>
+      </button>
+      <button class="quick-stock-btn" onclick="quickAnalyze('TCS')">
+        <span class="qsym">TCS</span>
+        <span class="qprice qup">₹3,503</span>
+      </button>
+      <button class="quick-stock-btn" onclick="quickAnalyze('HDFCBANK')">
+        <span class="qsym">HDFCBANK</span>
+        <span class="qprice qup">₹1,922</span>
+      </button>
+      <button class="quick-stock-btn" onclick="quickAnalyze('INFY')">
+        <span class="qsym">INFY</span>
+        <span class="qprice qup">₹1,579</span>
+      </button>
+      <button class="quick-stock-btn" onclick="quickAnalyze('TATAMOTORS')">
+        <span class="qsym">TATAMOTORS</span>
+        <span class="qprice qup">₹870</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main" id="mainContent">
+
+    <!-- ── DASHBOARD PAGE ── -->
+    <div class="page active" id="page-dashboard">
+      <div>
+        <div class="sec-title">📊 Indian Market <span>Dashboard</span></div>
+        <div class="sec-sub" id="dashSubtitle">Select a stock and click Analyze to get live AI-powered insights in ₹ INR</div>
+      </div>
+
+      <!-- Popular stocks -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title"><i class="bi bi-lightning-fill" style="color:var(--yellow)"></i> Popular Indian Stocks</div>
+        </div>
+        <div class="card-body">
+          <div class="chip-row">
+            <div class="stock-chip" onclick="quickAnalyze('RELIANCE')">RELIANCE</div>
+            <div class="stock-chip" onclick="quickAnalyze('TCS')">TCS</div>
+            <div class="stock-chip" onclick="quickAnalyze('HDFCBANK')">HDFCBANK</div>
+            <div class="stock-chip" onclick="quickAnalyze('ICICIBANK')">ICICIBANK</div>
+            <div class="stock-chip" onclick="quickAnalyze('INFY')">INFY</div>
+            <div class="stock-chip" onclick="quickAnalyze('BHARTIARTL')">BHARTIARTL</div>
+            <div class="stock-chip" onclick="quickAnalyze('TATAMOTORS')">TATAMOTORS</div>
+            <div class="stock-chip" onclick="quickAnalyze('SBIN')">SBIN</div>
+            <div class="stock-chip" onclick="quickAnalyze('BAJFINANCE')">BAJFINANCE</div>
+            <div class="stock-chip" onclick="quickAnalyze('SUNPHARMA')">SUNPHARMA</div>
+            <div class="stock-chip" onclick="quickAnalyze('WIPRO')">WIPRO</div>
+            <div class="stock-chip" onclick="quickAnalyze('MARUTI')">MARUTI</div>
+            <div class="stock-chip" onclick="quickAnalyze('AXISBANK')">AXISBANK</div>
+            <div class="stock-chip" onclick="quickAnalyze('ITC')">ITC</div>
+            <div class="stock-chip" onclick="quickAnalyze('ONGC')">ONGC</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPIs -->
+      <div class="kpi-row">
+        <div class="kpi cyan">
+          <div class="kpi-label"><i class="bi bi-currency-rupee"></i> Current Price</div>
+          <div class="kpi-val" id="kpi-price">—</div>
+          <div class="kpi-sub">Live NSE price</div>
+        </div>
+        <div class="kpi green">
+          <div class="kpi-label"><i class="bi bi-robot"></i> AI Forecast</div>
+          <div class="kpi-val" id="kpi-pred">—</div>
+          <div class="kpi-sub">10-day prediction</div>
+        </div>
+        <div class="kpi blue">
+          <div class="kpi-label"><i class="bi bi-shield-check"></i> Confidence</div>
+          <div class="kpi-val" id="kpi-conf">—</div>
+          <div class="kpi-sub">Model accuracy</div>
+        </div>
+        <div class="kpi yellow">
+          <div class="kpi-label"><i class="bi bi-newspaper"></i> Sentiment</div>
+          <div class="kpi-val" id="kpi-sent">—</div>
+          <div class="kpi-sub">News analysis</div>
+        </div>
+        <div class="kpi" id="kpi-perf-card">
+          <div class="kpi-label"><i class="bi bi-arrow-up-circle"></i> Today's Change</div>
+          <div class="kpi-val" id="kpi-perf">—</div>
+          <div class="kpi-sub">vs. yesterday</div>
+        </div>
+        <div class="kpi" id="kpi-risk-card">
+          <div class="kpi-label"><i class="bi bi-exclamation-triangle"></i> Risk Level</div>
+          <div class="kpi-val" id="kpi-risk">—</div>
+          <div class="kpi-sub">Based on RSI</div>
+        </div>
+      </div>
+
+      <!-- Price chart -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title"><i class="bi bi-graph-up" style="color:var(--cyan)"></i> Price History — <span id="chartStock" style="color:var(--cyan)">Select a stock</span></div>
+        </div>
+        <div class="card-body">
+          <div class="chart-wrap"><canvas id="mainChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── AI PREDICTION PAGE ── -->
+    <div class="page" id="page-prediction">
+      <div>
+        <div class="sec-title">🤖 AI <span>Price Prediction</span></div>
+        <div class="sec-sub">LSTM neural network forecast for the next 10 days</div>
+      </div>
+
+      <!-- Decision Banner -->
+      <div class="decision-banner hold" id="decisionBanner">
+        <div class="decision-icon" id="decisionIcon">🤝</div>
+        <div class="decision-text">
+          <div class="decision-verdict" id="decisionVerdict">Analyze a Stock</div>
+          <div class="decision-reason" id="decisionReason">Run an analysis on any Indian stock to get an AI-powered buy/sell/hold recommendation with full reasoning.</div>
+        </div>
+      </div>
+
+      <!-- Prediction chart -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title"><i class="bi bi-graph-up-arrow" style="color:var(--green)"></i> Actual vs. Predicted Price</div>
+        </div>
+        <div class="card-body">
+          <div class="chart-wrap"><canvas id="predChart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Score rings -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title"><i class="bi bi-stars" style="color:var(--yellow)"></i> AI Score Breakdown</div>
+        </div>
+        <div class="card-body">
+          <div class="score-rings">
+            <div class="score-ring-card">
+              <div class="score-ring-wrap">
+                <canvas id="scoreRing1" width="72" height="72"></canvas>
+                <div class="score-ring-num" id="scoreNum1">—</div>
+              </div>
+              <div class="score-ring-lbl">Technical</div>
+            </div>
+            <div class="score-ring-card">
+              <div class="score-ring-wrap">
+                <canvas id="scoreRing2" width="72" height="72"></canvas>
+                <div class="score-ring-num" id="scoreNum2">—</div>
+              </div>
+              <div class="score-ring-lbl">Sentiment</div>
+            </div>
+            <div class="score-ring-card">
+              <div class="score-ring-wrap">
+                <canvas id="scoreRing3" width="72" height="72"></canvas>
+                <div class="score-ring-num" id="scoreNum3">—</div>
+              </div>
+              <div class="score-ring-lbl">LSTM Model</div>
+            </div>
+            <div class="score-ring-card">
+              <div class="score-ring-wrap">
+                <canvas id="scoreRing4" width="72" height="72"></canvas>
+                <div class="score-ring-num" id="scoreNum4">—</div>
+              </div>
+              <div class="score-ring-lbl">Market</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TECHNICAL PAGE ── -->
+    <div class="page" id="page-technical">
+      <div>
+        <div class="sec-title">📈 Technical <span>Analysis</span></div>
+        <div class="sec-sub">RSI, MACD, and candlestick charts to understand price momentum</div>
+      </div>
+
+      <!-- Indicator summary -->
+      <div class="ind-grid">
+        <div class="ind-card">
+          <div class="ind-label">RSI (14-Day)</div>
+          <div class="ind-val" id="rsiVal" style="color:var(--yellow)">—</div>
+          <div class="ind-desc" id="rsiDesc">Run analysis to see RSI</div>
+        </div>
+        <div class="ind-card">
+          <div class="ind-label">MACD Signal</div>
+          <div class="ind-val" id="macdVal" style="color:var(--blue)">—</div>
+          <div class="ind-desc" id="macdDesc">Run analysis to see MACD</div>
+        </div>
+        <div class="ind-card">
+          <div class="ind-label">50-Day MA</div>
+          <div class="ind-val" id="ma50Val" style="color:var(--cyan)">—</div>
+          <div class="ind-desc">Short-term moving average</div>
+        </div>
+        <div class="ind-card">
+          <div class="ind-label">200-Day MA</div>
+          <div class="ind-val" id="ma200Val" style="color:var(--purple)">—</div>
+          <div class="ind-desc">Long-term moving average</div>
+        </div>
+      </div>
+
+      <!-- RSI Chart -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title"><i class="bi bi-activity" style="color:var(--yellow)"></i> RSI — Overbought / Oversold</div>
+        </div>
+        <div class="card-body">
+          <div class="chart-wrap"><canvas id="rsiChart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Candlestick -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title"><i class="bi bi-bar-chart-fill" style="color:var(--cyan)"></i> Candlestick Chart (1 Month)</div>
+        </div>
+        <div class="card-body" style="padding:0">
+          <div id="candlestickContainer" style="height:280px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SENTIMENT PAGE ── -->
+    <div class="page" id="page-sentiment">
+      <div>
+        <div class="sec-title">💬 News <span>Sentiment</span></div>
+        <div class="sec-sub">How the market and news feel about this stock</div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <!-- Sentiment bars -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title"><i class="bi bi-bar-chart" style="color:var(--green)"></i> Sentiment Breakdown</div>
+          </div>
+          <div class="card-body">
+            <div class="sent-row">
+              <div class="sent-lbl">🟢 Bullish</div>
+              <div class="sent-track"><div class="sent-fill bull" id="bullBar" style="width:0%"></div></div>
+              <div class="sent-pct qup" id="bullPct">0%</div>
+            </div>
+            <div class="sent-row">
+              <div class="sent-lbl">⚪ Neutral</div>
+              <div class="sent-track"><div class="sent-fill neu" id="neuBar" style="width:0%"></div></div>
+              <div class="sent-pct" id="neuPct" style="color:var(--muted)">0%</div>
+            </div>
+            <div class="sent-row">
+              <div class="sent-lbl">🔴 Bearish</div>
+              <div class="sent-track"><div class="sent-fill bear" id="bearBar" style="width:0%"></div></div>
+              <div class="sent-pct qdn" id="bearPct">0%</div>
+            </div>
+            <div style="margin-top:16px;padding:14px;background:rgba(255,255,255,0.03);border-radius:var(--r-sm);border:1px solid var(--border)">
+              <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Overall Sentiment Score</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:700" id="sentScore">—</div>
+              <div style="font-size:11px;color:var(--muted)">Range: -1.0 (very bearish) to +1.0 (very bullish)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sentiment chart -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title"><i class="bi bi-calendar3" style="color:var(--blue)"></i> Weekly Trend</div>
+          </div>
+          <div class="card-body">
+            <div class="chart-wrap"><canvas id="sentTrendChart"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- News feed -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title"><i class="bi bi-newspaper" style="color:var(--cyan)"></i> Latest News Headlines</div>
+        </div>
+        <div class="card-body">
+          <div class="news-list" id="newsFeed">
+            <div style="color:var(--muted);font-size:13px;text-align:center;padding:24px">Run analysis to see latest news</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── RECOMMENDATION PAGE ── -->
+    <div class="page" id="page-recommendation">
+      <div>
+        <div class="sec-title">🎯 AI <span>Recommendation</span></div>
+        <div class="sec-sub">Final AI verdict combining LSTM predictions, technical signals, and news sentiment</div>
+      </div>
+
+      <div class="decision-banner hold" id="recBanner">
+        <div class="decision-icon" id="recIcon">🤝</div>
+        <div class="decision-text">
+          <div class="decision-verdict" id="recVerdict">Waiting for Analysis</div>
+          <div class="decision-reason" id="recReason">Select an Indian stock above and click Analyze. The AI will look at price trends, RSI, MACD, news sentiment, and LSTM forecasts to give you a clear recommendation.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title"><i class="bi bi-stars" style="color:var(--yellow)"></i> Score Cards</div>
+        </div>
+        <div class="card-body">
+          <div class="score-rings">
+            <div class="score-ring-card">
+              <div class="score-ring-wrap">
+                <canvas id="recRing1" width="72" height="72"></canvas>
+                <div class="score-ring-num" id="recNum1">—</div>
+              </div>
+              <div class="score-ring-lbl">Technical</div>
+            </div>
+            <div class="score-ring-card">
+              <div class="score-ring-wrap">
+                <canvas id="recRing2" width="72" height="72"></canvas>
+                <div class="score-ring-num" id="recNum2">—</div>
+              </div>
+              <div class="score-ring-lbl">Sentiment</div>
+            </div>
+            <div class="score-ring-card">
+              <div class="score-ring-wrap">
+                <canvas id="recRing3" width="72" height="72"></canvas>
+                <div class="score-ring-num" id="recNum3">—</div>
+              </div>
+              <div class="score-ring-lbl">LSTM Model</div>
+            </div>
+            <div class="score-ring-card">
+              <div class="score-ring-wrap">
+                <canvas id="recRing4" width="72" height="72"></canvas>
+                <div class="score-ring-num" id="recNum4">—</div>
+              </div>
+              <div class="score-ring-lbl">Market</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── WATCHLIST PAGE ── -->
+    <div class="page" id="page-watchlist">
+      <div>
+        <div class="sec-title">📋 NSE/BSE <span>Watchlist</span></div>
+        <div class="sec-sub">Live prices and AI signals for top Indian stocks</div>
+      </div>
+
+      <div class="card">
+        <div class="card-body" style="padding:0;overflow-x:auto">
+          <table class="watch-table" id="watchTable">
+            <thead><tr>
+              <th>Stock</th><th>Price (₹)</th><th>Change</th>
+              <th>AI Forecast</th><th>Confidence</th><th>Sentiment</th><th>Signal</th>
+            </tr></thead>
+            <tbody id="watchBody">
+              <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">Run analysis to load watchlist</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── HEATMAP PAGE ── -->
+    <div class="page" id="page-heatmap">
+      <div>
+        <div class="sec-title">🌡️ Indian Market <span>Heatmap</span></div>
+        <div class="sec-sub">Sector-wise performance across NSE/BSE — green = rising, red = falling</div>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <div class="heatmap-grid" id="heatmapGrid">
+            <div style="color:var(--muted);font-size:13px;text-align:center;padding:24px;grid-column:1/-1">Run analysis to load heatmap</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- RIGHT PANEL — AI CHAT -->
+  <aside class="right-panel">
+    <div class="rp-head">
+      <div class="rp-title"><i class="bi bi-robot"></i> AI Assistant</div>
+      <div class="rp-sub">Ask anything about Indian stocks</div>
+    </div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="chat-input-area">
+      <textarea class="chat-input" id="chatInput" rows="1"
+        placeholder="Ask: What is the RSI? Should I buy RELIANCE?"
+        onkeydown="handleChatKey(event)"></textarea>
+      <button class="chat-send" onclick="sendChat()"><i class="bi bi-send-fill"></i></button>
+    </div>
+  </aside>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <i class="bi bi-check-circle-fill" style="color:var(--green)"></i>
+  <span id="toastMsg"></span>
+</div>
+
+<!-- SCRIPTS -->
+<script src="quantum_alpha.js"></script>
+</body>
+</html>

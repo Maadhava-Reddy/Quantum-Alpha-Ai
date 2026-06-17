@@ -1,0 +1,12 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Local HTML prediction test outputs
+stock_prediction.html
+
+# Local logs
+*.log
+
+# Editor settings
+.vscode/
